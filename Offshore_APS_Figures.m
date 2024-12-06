@@ -2,7 +2,7 @@
 
 clear; close all; clc;
 addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/readimx-v2.1.8-osx/');
-addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/Offshore/OffshoreTurbines_Functions/');
+addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/OffshoreTurbines/OffshoreTurbines_Functions');
 addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/colormaps')
 fprintf('All Paths Imported...\n\n')
 
