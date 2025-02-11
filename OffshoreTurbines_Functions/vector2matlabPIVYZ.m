@@ -6,7 +6,7 @@
 % out_path:     Folder where new struct file will be saved.
 % out_name:     Name of new struct file.
 
-function output = vector2matlabPIVXY(frames, file_path, out_path)
+function output = vector2matlabPIVYZ(frames, file_path, out_path)
 
     % Halim edit to be able to open
     output = matfile(out_path, 'Writable', true);

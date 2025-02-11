@@ -1,4 +1,4 @@
-function output = croppingPIVXY(data, waves_data, details, out_path)
+function output = croppingPIVYZ(data, waves_data, details, out_path)
 
     fprintf('<croppingPIVXZ> Cropping Instantaneous Fields...\n');
 

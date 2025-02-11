@@ -15,7 +15,7 @@ fprintf("All Paths Imported...\n\n");
 clc;
 
 % Inputs
-plane       = 4;
+plane       = 3;
 image_dir   = '/Users/zeinsadek/Desktop/Experiments/PIV/Processing/OffshoreTurbines/Calibration/PIVXY_Stitching';
 images_path = strcat(image_dir, '/Plane', num2str(plane), '/ArUco/*.im7');
 images      = dir(char(images_path));

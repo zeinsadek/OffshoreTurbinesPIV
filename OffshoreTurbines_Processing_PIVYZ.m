@@ -13,16 +13,17 @@ fprintf('All Paths Imported...\n\n')
 
 % Data paths
 clc;
-project_path   = '/Volumes/ZeinResults';
-recording_name = 'FWF_I_PL1_AK12_LM50_A';
+project_path   = '/Volumes/ZeinResults/PIV/FBT_PL2_AK12_1';
+recording_name = 'FBT_PL2_AK12_LM50_A';
 details        = namereader(recording_name);
 
 % Image paths
-perspective_path = fullfile(project_path, 'Perspective', strcat(recording_name, '_Perspective'));
-piv_path         = fullfile(project_path, 'PIV', recording_name);
+% perspective_path = fullfile(project_path, 'Perspective', strcat(recording_name, '_Perspective'));
+perspective_path = fullfile(project_path, recording_name, 'ImageCorrection');
+piv_path         = fullfile(project_path, recording_name, 'StereoPIV_MPd(2x12x12_50%ov)_GPU');
 
-% Save paths
-save_path = '/Volumes/ZeinResults/APS';
+% Save paths 
+save_path = '/Volumes/ZeinResults/CrossplaneResults';
 paths     = savepaths(save_path, recording_name);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -48,7 +49,7 @@ if exist(paths.wave, 'file')
      waves = load(paths.wave);
      waves = waves.output;
 else
-     waves = wavedetectionPIVXY(frames, perspective_path, details, paths.wave);
+     waves = wavedetectionPIVYZ(frames, perspective_path, details, paths.wave);
 end
 
 %% Check Waves

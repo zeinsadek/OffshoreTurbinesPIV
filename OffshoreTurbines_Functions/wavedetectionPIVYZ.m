@@ -1,7 +1,7 @@
 %%% Free Surface Detection Code
 % Zein Sadek, 5/23
 
-function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
+function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
 
     % Check if Input is Readable
     if isempty(raw_image_path)
