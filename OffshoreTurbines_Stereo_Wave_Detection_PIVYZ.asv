@@ -23,7 +23,7 @@ images = dir([image_directory, '/*.im7']);
 % LOAD IMAGES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-raw = readimx([image_directory, '\', images(101).name]);
+raw = readimx([image_directory, '\', images(5).name]);
 
 % Load snapshots from both Cameras
 raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
@@ -44,16 +44,31 @@ y = raw.Frames{1,1}.Scales.Y.Slope.*linspace(1, nf(2), nf(2)).*raw.Frames{1,1}.G
 
 % New
 [X, Y] = meshgrid(x, y);
-raw_image_CAM1 = fliplr(raw_image_CAM1.');
-raw_image_CAM2 = fliplr(raw_image_CAM2.');
-X = -fliplr(X);
+raw_image_CAM1 = (raw_image_CAM1.');
+raw_image_CAM2 = (raw_image_CAM2.');
+X = -X;
+
+%% Resize images to run code faster
+
+scale = 0.1;
+raw_image_CAM1 = imresize(raw_image_CAM1, scale);
+raw_image_CAM2 = imresize(raw_image_CAM2, scale);
+X = imresize(X, scale);
+Y = imresize(Y, scale);
+x = imresize(-x, scale);
+y = imresize(y, scale);
+
 
 %%
-
-figure()
-contourf(X,Y,raw_image_CAM1)
-colorbar()
-axis equal
+% 
+% tst = raw_image_CAM1;
+% tst(tst == 0) = nan;
+% 
+% figure()
+% contourf(X,Y, tst, 100, 'linestyle', 'none')
+% colormap gray
+% colorbar()
+% axis equal
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,8 +91,30 @@ FOV_mask = FOV_mask/2;
 % Combined stereo image
 combined_image = FOV_mask .* (raw_image_CAM1 + raw_image_CAM2);
 
-% Mask Plane 1 because of tape
-combined_image(X < -20) = nan;
+%%
+figure()
+contourf(X, Y, combined_image, 100, 'linestyle', 'none')
+colormap gray
+axis equal
+colorbar()
+yline(-100)
+clim([0, 80])
+
+%%
+
+%%% NEW: Block brightspot
+tst = combined_image;
+% tst(X > -76 | X < -64 | Y < -86 | Y > -94) = nan;
+tst(-76<X<-64) = nan;
+
+figure()
+contourf(X, Y, tst, 100, 'linestyle', 'none')
+colormap gray
+axis equal
+colorbar()
+yline(-100)
+clim([0, 80])
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CROP ARRAY
@@ -88,7 +125,7 @@ combined_image(X < -20) = nan;
 % Find index of value closest to what we want to crop to
 % Initial, uncropped x positions from DaVis
 x = X(1,:);
-left_bound = -100;
+left_bound = 100;
 [~, left_bound_idx] = min(abs(x - left_bound));
 
 % Truncate relavant portion of array
@@ -100,7 +137,7 @@ combined_image(:, 1:left_bound_idx) = [];
 % Redefine x since it has been partially cropped
 x = X(1,:);
 % Find index of value closest to what we want to crop to
-right_bound = 100;
+right_bound = -100;
 [~, right_bound_idx] = min(abs(x - right_bound));
 
 % Truncate relavant portion of array
@@ -145,22 +182,18 @@ canny_upper = 0.4;
 background  = 40;
 
 % Normal Gauss
-blur_size = 15;
-
-% Juliaan
-% blur_size   = 25;
+blur_size = 1;
 
 % Get Image Size before Blurring
 nf = size(combined_image);
 
 % Blur and Threshold
 combined_image_blurred = imgaussfilt(combined_image, blur_size);
-% combined_image_blurred = juliaan_smooth(combined_image, blur_size);
-combined_image_blurred(combined_image_blurred < background) = 0;
+combined_image_blurred(combined_image_blurred < background) = nan;
 
 % Canny Edge Deetection
 wave_edge = edge(combined_image_blurred, 'Canny', [canny_lower, canny_upper]);
-wave_profile = zeros(1, nf(2));
+wave_profile = ones(1, nf(2));
 
 % Seperate free surface
 y = Y(:,1);
@@ -189,21 +222,22 @@ figure()
 t = tiledlayout(1,2);
 nexttile()
 hold on
-contourf(X,Y,combined_image, 'linestyle', 'none')
+contourf(X, Y, combined_image_blurred, 'linestyle', 'none')
 plot(x, wave_profile, 'red')
 xline(0)
 hold off
 axis equal
-xlim([-100, 100])
+colorbar()
+% xlim([-100, 100])
 
 nexttile()
 hold on
-contourf(X,Y,wave_cropped_image, 'linestyle', 'none')
+contourf(X, Y, wave_cropped_image, 'linestyle', 'none')
 plot(x, wave_profile, 'red')
 xline(0)
 hold off
 axis equal
-xlim([-100, 100])
+% xlim([-100, 100])
 
 
 

@@ -119,8 +119,8 @@ for i = 1:num_images
     axis equal
     axis tight
     xlim([-100,100])
-    ylim([-150,100])
-    caxis ([0, 4])
+    % ylim([-150,100])
+    caxis ([-1.5, 4])
     c = colorbar();
     hold off
 

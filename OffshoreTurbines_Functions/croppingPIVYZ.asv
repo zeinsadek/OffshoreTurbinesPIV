@@ -73,12 +73,11 @@ function output = croppingPIVYZ(data, waves_data, out_path)
 
         %%% NEW: Fill in salt+peper holes w/ interpolation\
         U(U == 0) = nan;
-        V(V == 0) = nan;
-        W(W == 0) = nan;
+        V(V)
 
-        % U = inpaint_nans(double(U));
-        % V = inpaint_nans(double(V));
-        % W = inpaint_nans(double(W));
+        U = inpaint_nans(double(U));
+        V = inpaint_nans(double(V));
+        W = inpaint_nans(double(W));
         
         % Crop below wave
         nf   = size(U);

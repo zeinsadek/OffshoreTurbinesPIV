@@ -22,7 +22,7 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, out_path)
         D          = length(image_name);
 
         %%% FOR TESTING
-        D = 500;
+        D = 10;
         scale = 0.1;
 
         % Load snapshots from both Cameras
@@ -149,16 +149,15 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, out_path)
             % Get Image Size before Blurring
             nf = size(combined_image);
 
+            %%% NEW: Block brightspot
+            combined_image(X > -76 & X < -64 & Y < -83 & Y > -91) = nan;
+            
             % Blur and Threshold
             combined_image_blurred = imgaussfilt(combined_image, blur_size);
             combined_image_blurred(combined_image_blurred < background) = nan;
             
             %%% NEW: Try masking deleting above wave to remove bright spots
             combined_image_blurred(Y > -81) = nan;
-            %%% NEW: Block brightspot
-            % combined_image_blurred(X > -76 & X < -64 & Y < -80 & Y > -88) = nan;
-            %%% NEW: remove super bright spots
-            combined_image_blurred(combined_image_blurred > 65) = nan;
 
 
             % Canny Edge Deetection
@@ -181,17 +180,17 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, out_path)
             end
             
             % Clean profile
-            wave_profile = fillmissing(filloutliers(wave_profile, "linear"), "linear");
+            wave_profile(wave_profile > 0) = nan;
             
             %%% TEST
-            % figure(frame_number)
-            % hold on
-            % contourf(X, Y, combined_image_blurred, 10, 'LineStyle', 'none')
-            % plot(x, wave_profile, 'color', 'red', 'linewidth', 3)
-            % hold off
-            % title(num2str(frame_number))
-            % axis equal
-            % colorbar()
+            figure(frame_number)
+            hold on
+            contourf(X, Y, combined_image_blurred, 10, 'LineStyle', 'none')
+            plot(x, wave_profile, 'color', 'red', 'linewidth', 3)
+            hold off
+            title(num2str(frame_number))
+            axis equal
+            colorbar()
 
             % Save profile
             wave_profiles(frame_number, :) = wave_profile;

@@ -116,7 +116,7 @@ u_mean = mean(u(:,:,~isnan(sum(waves.wave_profiles, 2))), 3, 'omitnan');
 v_mean = mean(v(:,:,~isnan(sum(waves.wave_profiles, 2))), 3, 'omitnan');
 w_mean = mean(w(:,:,~isnan(sum(waves.wave_profiles, 2))), 3, 'omitnan');
 
-disp(sum(~isnan(sum(waves.wave_profiles, 2)), 'all'))
+disp(sum(~isnan(sum(waves.wave_profiles, 2))), 'all')))
 % u_mean = mean(u, 3, 'omitnan');
 
 idx = 88;
@@ -127,7 +127,6 @@ wave = crop.waves(idx,:);
 % snapshot = inpaint_nans(double(snapshot));
 % snapshot(Y < wave) = nan;
 
-%%
 figure()
 hold on
 contourf(X, Y, w_mean, 300, 'linestyle', 'none')
@@ -135,7 +134,7 @@ plot(x, wave, 'black', 'linewidth', 3)
 hold off
 axis equal
 colormap coolwarm
-clim([-0.5, 0.5])
+clim([-1.5, 1.5])
 % clim([-1.5, 4.5])
 xlim([-100, 100])
 ylim([-150, 100])

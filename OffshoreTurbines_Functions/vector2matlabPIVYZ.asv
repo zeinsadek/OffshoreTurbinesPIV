@@ -17,7 +17,7 @@ function output = vector2matlabPIVYZ(frames, file_path, out_path)
 
     %%% FOR TESTING: 16GB of ram is not enough to process all 1400 images.
     %%% Will do a subset for the turbulence class
-    D = 500;
+    D = 100;
 
     % Check if Input is Readable
     if isempty(dir([file_path,'/*.vc7']))
