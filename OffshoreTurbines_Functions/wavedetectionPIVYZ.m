@@ -22,7 +22,7 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, out_path)
         D          = length(image_name);
 
         %%% FOR TESTING
-        D = 500;
+        % D = 500;
         scale = 0.1;
 
         % Load snapshots from both Cameras

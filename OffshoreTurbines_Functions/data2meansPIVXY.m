@@ -6,13 +6,13 @@
 % out_name:     Name of new struct file.
 % inst_struct:  Matlab data struct as input for calculations.
 
-function output = data2meansPIVXZ(data, out_path)
+function output = data2meansPIVXY(data, out_path)
 
     % Check if Save Folder Exists. [if not, create]
     if exist(out_path, 'file')
-        fprintf('<data2meansPIVXZ> *Save Folder was Previously Created. \n')
+        fprintf('<data2meansPIVXY> *Save Folder was Previously Created. \n')
     else
-        fprintf('<data2meansPIVXZ> *Creating New Save Floder. \n')
+        fprintf('<data2meansPIVXY> *Creating New Save Floder. \n')
     end
 
     D = data.D;
@@ -40,7 +40,7 @@ function output = data2meansPIVXZ(data, out_path)
     vw_p = zeros(size(inst_U));
 
     % Loop Through Each Frame in Struct.
-    fprintf('\n<data2meansPIVXZ> PROGRESS: \n');
+    fprintf('\n<data2meansPIVXY> PROGRESS: \n');
     for frame_number = 1:D
         
         % Print Progress.
@@ -80,16 +80,6 @@ function output = data2meansPIVXZ(data, out_path)
     output.uw = mean(uw_p, 3, 'omitnan');
     output.vw = mean(vw_p, 3, 'omitnan');
     
-    % output.u(output.u==0)   = NaN;
-    % output.v(output.v==0)   = NaN;
-    % output.w(output.w==0)   = NaN;
-    % output.uu(output.uu==0) = NaN;
-    % output.vv(output.vv==0) = NaN;
-    % output.ww(output.ww==0) = NaN;
-    % output.uv(output.uv==0) = NaN;
-    % output.uw(output.uw==0) = NaN;
-    % output.vw(output.vw==0) = NaN;
-
     output.X = X;
     output.Y = Y;
     output.D = D;
@@ -98,7 +88,7 @@ function output = data2meansPIVXZ(data, out_path)
     output.Waves = data.waves;
     
     % Save Matlab File.
-    fprintf('<data2meansPIVXZ> Saving Data to File... \n');
+    fprintf('<data2meansPIVXY> Saving Data to File... \n');
     save(out_path, 'output');
-    clc; fprintf('<data2meansPIVXZ> Data Save Complete \n')
+    clc; fprintf('<data2meansPIVXY> Data Save Complete \n')
 end
