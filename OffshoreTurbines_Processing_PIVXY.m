@@ -3,8 +3,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clc; clear; close all;
-addpath('C:\Users\ofercak\Desktop\Zein\PIV\readimx-v2.1.9-win64');
-addpath('C:\Users\ofercak\Desktop\Zein\PIV\OffshoreTurbinesPIV\OffshoreTurbines_Functions');
+addpath('C:\Users\sadek\Desktop\readimx-v2.1.9-win64');
+addpath('C:\Users\sadek\Desktop\ZeinPIVCodes_Github\OffshoreTurbinesPIV\OffshoreTurbines_Functions');
+addpath('C:\Program Files\MATLAB\slanCM')
 fprintf('All Paths Imported...\n\n')
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
