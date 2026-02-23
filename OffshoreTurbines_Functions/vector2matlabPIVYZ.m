@@ -15,6 +15,10 @@ function output = vector2matlabPIVYZ(frames, file_path, out_path)
     file_name = strcat(frames.common, '.vc7');
     D = length(frames.common);
 
+    %%% FOR TESTING: 16GB of ram is not enough to process all 1400 images.
+    %%% Will do a subset for the turbulence class
+    % D = 500;
+
     % Check if Input is Readable
     if isempty(dir([file_path,'/*.vc7']))
      fprintf('\n** INPUT FILES NOT FOUND! **\n')
@@ -40,7 +44,7 @@ function output = vector2matlabPIVYZ(frames, file_path, out_path)
             U0_index    = find(strcmp(names, 'U0'));
             V0_index    = find(strcmp(names, 'V0'));
             W0_index    = find(strcmp(names, 'W0'));
-    
+
             UF(:, :, frame_number) = data.Frames{1,1}.Components{U0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{U0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{U0_index,1}.Scale.Offset;
             VF(:, :, frame_number) = data.Frames{1,1}.Components{V0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{V0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{V0_index,1}.Scale.Offset;
             WF(:, :, frame_number) = data.Frames{1,1}.Components{W0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{W0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{W0_index,1}.Scale.Offset;
@@ -92,16 +96,16 @@ function output = vector2matlabPIVYZ(frames, file_path, out_path)
     
         % Make new array to get matfile function to work
         % Correct Sign, Direction, and Add Data to Object.
-        output.U = -UF;
+        output.U = WF;
         output.V = VF;
-        output.W = WF;
+        output.W = UF;
 
         % Add Image/Data Parameters to struct file.
         nf     = size(output.U);
         x      = data.Frames{1,1}.Scales.X.Slope.*linspace(1, nf(1), nf(1)).*data.Frames{1,1}.Grids.X + data.Frames{1,1}.Scales.X.Offset;
         y      = data.Frames{1,1}.Scales.Y.Slope.*linspace(1, nf(2), nf(2)).*data.Frames{1,1}.Grids.Y + data.Frames{1,1}.Scales.Y.Offset;
         [X, Y] = meshgrid(x, y);
-        output.X = X;
+        output.X = -X;
         output.Y = Y;
         output.D = D;
         

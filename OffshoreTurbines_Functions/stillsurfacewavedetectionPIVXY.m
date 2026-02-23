@@ -1,7 +1,7 @@
 %%% Free Surface Detection Code
 % Zein Sadek, 5/23
 
-function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
+function output = stillsurfacewavedetectionPIVXY(frames, raw_image_path, details, out_path)
 
     % Check if Input is Readable
     if isempty(raw_image_path)
@@ -51,7 +51,7 @@ function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
 
             % Load both camera images
             raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
-            raw_image_CAM2 = raw.Frames{3,1}.Components{1,1}.Planes{1,1};
+            raw_image_CAM2 = raw.Frames{2,1}.Components{1,1}.Planes{1,1};
 
             % Get coordinates
             nf = size(raw_image_CAM1);
@@ -80,16 +80,12 @@ function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
             
             % Mask Plane 1 because of tape
             if details.plane == 1
-                if contains(details.arrangement, 'Floating') == 1
-                    combined_image(X < -35) = nan;
-                end
+                combined_image(X < -35) = nan;
             end
 
             % Mask Plane 4 because of tape
             if details.plane == 5
-                if contains(details.arrangement, 'Floating') == 1
-                    combined_image(X > 65) = nan;
-                end
+                combined_image(X > 65) = nan;
             end
 
 
@@ -123,17 +119,17 @@ function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
             % Canny Params
             canny_lower = 0.1;
             canny_upper = 0.4;
-            background  = 40;
+            % background  = 40;
             
             % Normal Gauss
-            blur_size = 15;
+            blur_size = 5;
             
             % Get Image Size before Blurring
             nf = size(combined_image);
             
             % Blur and Threshold
             combined_image_blurred = imgaussfilt(combined_image, blur_size);
-            combined_image_blurred(combined_image_blurred < background) = 0;
+            % combined_image_blurred(combined_image_blurred < background) = 0;
             
             % Canny Edge Detection
             wave_edge = edge(combined_image_blurred, 'Canny', [canny_lower, canny_upper]);

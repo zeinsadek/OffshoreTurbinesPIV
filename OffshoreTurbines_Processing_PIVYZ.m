@@ -3,8 +3,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clc; clear; close all;
-addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/readimx-v2.1.8-osx/');
-addpath('/Users/zeinsadek/Desktop/Experiments/PIV/Processing/OffshoreTurbines/OffshoreTurbines_Functions/');
+addpath('C:\Users\ofercak\Desktop\Zein\PIV\readimx-v2.1.9-win64');
+addpath('C:\Users\ofercak\Desktop\Zein\PIV\OffshoreTurbinesPIV\OffshoreTurbines_Functions');
+% addpath('C:\Users\Zein\Desktop\PIV\Colormaps')
+% addpath('C:\Users\ofercak\Desktop\Zein\PIV\Inpaint_nans');
 fprintf('All Paths Imported...\n\n')
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,8 +15,8 @@ fprintf('All Paths Imported...\n\n')
 
 % Data paths
 clc;
-project_path   = '/Volumes/ZeinResults/PIV/FBT_PL2_AK12_1';
-recording_name = 'FBT_PL2_AK12_LM50_A';
+project_path   = 'H:\PIV\FBT_PL2_AK12_2';
+recording_name = 'FBT_PL2_AK12_LM25_A';
 details        = namereader(recording_name);
 
 % Image paths
@@ -23,7 +25,7 @@ perspective_path = fullfile(project_path, recording_name, 'ImageCorrection');
 piv_path         = fullfile(project_path, recording_name, 'StereoPIV_MPd(2x12x12_50%ov)_GPU');
 
 % Save paths 
-save_path = '/Volumes/ZeinResults/CrossplaneResults';
+save_path = 'H:\CrossplaneResults';
 paths     = savepaths(save_path, recording_name);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,7 +51,7 @@ if exist(paths.wave, 'file')
      waves = load(paths.wave);
      waves = waves.output;
 else
-     waves = wavedetectionPIVYZ(frames, perspective_path, details, paths.wave);
+     waves = wavedetectionPIVYZ(frames, perspective_path, paths.wave);
 end
 
 %% Check Waves
@@ -57,22 +59,18 @@ end
 % % Replace last nan value with previous value
 % waves.wave_profiles(:,end) = waves.wave_profiles(:, end - 1);
 % 
-% % Plot
-% figure()
-% hold on
-% for i = 1:5:waves.D
-%     % Remove small bumps by filtering derivative
-%     wave = waves.wave_profiles(i,:);
-%     grad_wave = gradient(wave);
-%     wave(grad_wave > 0.5) = nan;
-%     wave(grad_wave < -0.5) = nan;
-%     waves.wave_profiles(i,:) = wave;
-%     plot(waves.x, wave)
-% end
-% xline(-20)
-% hold off
-% axis equal
-% xlim([-100, 100])
+% Plot
+lw = 3;
+figure()
+hold on
+for i = 1:10:waves.D
+    plot(waves.x, waves.wave_profiles(i,:), 'linewidth', lw);
+    % plot(waves.x, fillmissing(filloutliers(waves.wave_profiles(i,:), "linear"), "linear"), 'displayname', num2str(i), 'LineWidth', lw)
+end
+hold off
+% legend()
+axis equal
+xlim([-100, 100])
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DAVIS TO MATLAB
@@ -82,10 +80,10 @@ clc;
 if exist(paths.data, 'file')
     fprintf('* Loading DATA from File\n')
     data = matfile(paths.data);
-    data = data.output;
 else
-    data = vector2matlabPIVXY(frames, piv_path, paths.data);
+    data = vector2matlabPIVYZ(frames, piv_path, paths.data);
 end
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CROP INSTANTANEOUS
@@ -94,113 +92,155 @@ end
 clc;
 if exist(paths.crop, 'file')
     fprintf('* Loading CROP from File\n')
-    crop = load(paths.crop);
-    crop = crop.output;
+    crop = matfile(paths.crop);
 else
-    crop = croppingPIVXY(data, waves, details, paths.crop);
+    crop = croppingPIVYZ(data, waves, paths.crop);
 end
 
-% OG CODE
-% for frame = 1:data.D
-% for frame = 1:5
+%%
+
+% frame = 50;
 % 
-%     % Print Progress. 
-%     progressbarText(frame/data.D);
+% u = crop.U(:,:,frame);
+% v = crop.V(:,:,frame);
+% w = crop.W(:,:,frame);
+% wave = crop.waves(frame, :);
 % 
-%     % Load frames
-%     X = data.X;
-%     Y = data.Y;
-%     U = data.U(:,:,frame).';
-%     V = data.V(:,:,frame).';
-%     W = data.W(:,:,frame).';
+% X = crop.X;
+% Y = crop.Y;
 % 
-%     % Set ouside of calibration plate to NANs
-%     U(X > 100 | X < -100) = nan;
-%     V(X > 100 | X < -100) = nan;
-%     W(X > 100 | X < -100) = nan;
+% figure()
+% hold on
+% contourf(X, Y, w, 100, 'linestyle', 'none');
+% plot(X(1,:), wave, 'linewidth', 3)
+% hold off
+% axis equal
+% colorbar()
+
+
+
+%%
+
+waves = crop.waves;
+
+figure()
+hold on
+for i = 1:length(waves)
+    plot(X(1,:), waves(i,:))
+end
+hold off
+
+%%
+
+figure()
+plot(sum(waves, 2))
+
+
+%%
+u = crop.U;
+v = crop.V;
+w = crop.W;
+X = crop.X;
+Y = crop.Y;
+x = X(1,:);
+
+% means
+% u_mean = mean(u(:,:,~isnan(sum(crop.waves, 2))), 3, 'omitnan');
+% v_mean = mean(v(:,:,~isnan(sum(crop.waves, 2))), 3, 'omitnan');
+% w_mean = mean(w(:,:,~isnan(sum(crop.waves, 2))), 3, 'omitnan');
+
+logical_idx = abs(mean(waves + 100, 2)) < 20 | ~isnan(sum(waves, 2));
+u_mean = mean(u(:,:,logical_idx), 3, "omitnan");
+
+
+disp(sum(~isnan(sum(crop.waves, 2)), 'all'))
+% u_mean = mean(u, 3, 'omitnan');
+
+% idx = 89;
+% snapshot = u(:,:,idx);
+% snapshot(snapshot == 0) = nan;
+% wave = crop.waves(idx,:);
+
+% snapshot = inpaint_nans(double(snapshot));
+% snapshot(Y < wave) = nan;
+
+figure()
+hold on
+contourf(X, Y, u_mean, 300, 'linestyle', 'none')
+% plot(x, wave, 'black', 'linewidth', 3)
+hold off
+axis equal
+colormap parula
+colorbar
+% clim([-0.5, 0.5])
+% clim([-1.5, 4.5])
+xlim([-100, 100])
+ylim([-150, 100])
+
+%%
+
+% u = data.U;
+% v = data.V;
+% w = data.W;
 % 
-%     % Initial, uncropped x positions from DaVis
-%     x = X(1,:);
+% X = data.X;
+% Y = data.Y;
 % 
-%     %%% LHS
-%     % Find index of value closest to what we want to crop to
-%     left_bound = -100;
-%     [~, left_bound_idx] = min(abs(x - left_bound));
+% x = crop.X(1,:);
 % 
-%     % Truncate relavant portion of array
-%     X(:, 1:left_bound_idx) = [];
-%     Y(:, 1:left_bound_idx) = [];
-%     U(:, 1:left_bound_idx) = [];
-%     V(:, 1:left_bound_idx) = [];
-%     W(:, 1:left_bound_idx) = [];
+% idx = 5;
+% snapshot = u(:,:,idx);
+% snapshot(snapshot == 0) = nan;
+% wave = crop.waves(idx,:);
 % 
-%     %%% RHS
-%     % Redefine x since it has been partially cropped
-%     x = X(1,:);
-%     % Find index of value closest to what we want to crop to
-%     right_bound = 100;
-%     [~, right_bound_idx] = min(abs(x - right_bound));
-% 
-%     % Truncate relavant portion of array
-%     X(:, right_bound_idx:end) = [];
-%     Y(:, right_bound_idx:end) = [];
-%     U(:, right_bound_idx:end) = [];
-%     V(:, right_bound_idx:end) = [];
-%     W(:, right_bound_idx:end) = [];
-% 
-%     if frame == 1
-%         size_PIV = size(X);
-%         cropped.waves = nan(data.D, size_PIV(2));
-%         cropped.U = nan(size_PIV(1), size_PIV(2), data.D);
-%         cropped.V = nan(size_PIV(1), size_PIV(2), data.D);
-%         cropped.W = nan(size_PIV(1), size_PIV(2), data.D);
-%     end
-% 
-%     % Flip components to have flow be left to right
-%     U = fliplr(U);
-%     V = fliplr(V);
-%     W = fliplr(W);
-% 
-%     % Crop below wave
-%     nf = size(U);
-%     resized_wave = imresize(waves.wave_profiles(frame,:),[1,nf(2)]);
-% 
-%     % Delete physically masked portion. Only for Plane 1
-%     if details.plane == 1
-%         if contains(details.arrangement, 'Floating') == 1
-%             cutoff = -20;
-%             U(X < cutoff) = nan;
-%             V(X < cutoff) = nan;
-%             W(X < cutoff) = nan;
-%             resized_wave(unique(X) < cutoff) = nan;
-%         end
-%     end
-% 
-%     % Save Crops
-%     cropped.waves(frame,:) = resized_wave;
-%     cropped.X = X;
-%     cropped.Y = Y;
-%     cropped.U(:,:,frame) = U;
-%     cropped.V(:,:,frame) = V;
-%     cropped.W(:,:,frame) = W;
-% 
-%     % Clean up blank spots in wave
-%     x = unique(X).';
-%     [~, interp_idx] = min(abs(x - cutoff));
-%     if sum(isnan(resized_wave(interp_idx:end))) < 100 
-%         interp_x = x(interp_idx:end);
-%         interp_wave = cropped.waves(frame,interp_idx:end);
-%         interp_wave(isnan(interp_wave)) = interp1(interp_x(~isnan(interp_wave)), interp_wave(~isnan(interp_wave)), interp_x(isnan(interp_wave)), 'linear', 'extrap');
-%         cropped.waves(frame, interp_idx:end) = interp_wave;
-%     end
-% 
-%     U(Y < cropped.waves(frame,:)) = nan;
-%     V(Y < cropped.waves(frame,:)) = nan;
-%     W(Y < cropped.waves(frame,:)) = nan;
-%     cropped.U(:,:,frame) = U;
-%     cropped.V(:,:,frame) = V;
-%     cropped.W(:,:,frame) = W;
-% end
+% figure()
+% hold on
+% contourf(X, Y, snapshot.', 300, 'linestyle', 'none')
+% plot(x, wave, 'black', 'linewidth', 3)
+% hold off
+% axis equal
+% colormap coolwarm
+% clim([-1.5, 4.5])
+% xlim([-100, 100])
+% ylim([-150, 100])
+
+%% Find frames with bad waves
+
+badFrames = char(frames.common(isnan(sum(waves.wave_profiles, 2))));
+badWaves = waves.wave_profiles((isnan(sum(waves.wave_profiles, 2))));
+
+
+figure()
+hold on
+for i = 1:length(badWaves)
+    plot(badWaves(i,:))
+end
+hold off
+
+%% Remove snapshots with no waves
+
+
+wave_mask = ~isnan(sum(waves.wave_profiles, 2));
+
+tmp_U = crop.U;
+tmp_V = crop.V;
+tmp_W = crop.W;
+
+crop.U = tmp_U(:,:,wave_mask);
+crop.V = tmp_V(:,:,wave_mask);
+crop.W = tmp_W(:,:,wave_mask);
+
+U = mean(crop.U, 3, 'omitnan');
+
+%%
+figure()
+contourf(crop.X, crop.Y, U, 100, 'linestyle', 'none')
+axis equal
+xlim([-100, 100])
+clim([-1.5, 4])
+
+
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MATLAB DATA TO ENSEMBLE/PHASE MEANS
@@ -215,59 +255,6 @@ else
      means = data2meansPIVXY(crop, paths.means);
 end
 
-% frame = 500;
-% 
-% % Plot
-% figure()
-% hold on
-% contourf(crop.X, crop.Y, crop.U(:,:,frame), 100, 'linestyle', 'none')
-% plot(unique(crop.X), crop.waves(frame,:), 'linewidth', 3, 'color', 'blue')
-% % xline(cutoff)
-% hold off
-% xlim([-100, 100])
-% ylim([-150, 100])
-% axis equal
-% colorbar()
-% clim([0, 2.5])
-% Fixing Holes in Waves
-% x = unique(cropped.X).';
-% 
-% [~, interp_idx] = min(abs(x - cutoff));
-% interp_x = x(interp_idx:end);
-% interp_wave = cropped.waves(12,interp_idx:end);
-% interp_wave(isnan(interp_wave)) = interp1(interp_x(~isnan(interp_wave)), interp_wave(~isnan(interp_wave)), interp_x(isnan(interp_wave)), 'linear', 'extrap');
-% cropped.waves(1,interp_idx:end) = interp_wave;
-% 
-% figure()
-% hold on
-% plot(interp_x, interp_wave)
-% plot(x, cropped.waves(1,:) + 2)
-% hold off
-% xlim([-100, 100])
-% xline(-20)
-% % plot()
-% Test Video
-% v = VideoWriter('test2.avi');
-% v.FrameRate = 3;
-% open(v);
-% 
-% for k = 1:100
-%    figure()
-%    hold on
-%    contourf(cropped.X, cropped.Y, cropped.U(:,:,k), 50, 'linestyle', 'none')
-%    plot(unique(cropped.X), cropped.waves(k,:), 'linewidth', 3, 'color', 'blue')
-%    hold off
-%    xlim([-100, 100])
-%    ylim([-150, 100])
-%    axis equal
-%    title(strcat('Frame ', num2str(k)))
-%    colorbar()
-%    clim([0, 2.5])
-%    frame = getframe;
-%    writeVideo(v,frame);
-%    close all
-% end
-% close(v);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PLOTS
@@ -279,6 +266,10 @@ U = means.u;
 V = means.v;
 W = means.w;
 
+% W(U == 0) = nan;
+% V(U == 0) = nan;
+% U(U == 0) = nan;
+
 uu = means.uu;
 vv = means.vv;
 ww = means.ww;
@@ -286,6 +277,13 @@ ww = means.ww;
 uv = means.uv;
 uw = means.uw;
 vw = means.vw;
+
+%% check if there are bad waves
+
+wave_profiles = waves.wave_profiles(1:100,:);
+sum(wave_profiles, 2)
+
+
 
 %% Means Plots
 
@@ -298,29 +296,40 @@ colormap jet
 contourf(X, Y, U, 100, 'linestyle', 'none')
 axis equal
 xlim([-100,100])
+clim([-1.5, 4.5])
 % ylim([-100,100])
 colorbar()
 title('u')
 
 nexttile()
-colormap jet
+colormap coolwarm
 contourf(X, Y, V, 100, 'linestyle', 'none')
 axis equal
 xlim([-100,100])
+clim([-0.5, 0.5])
 % ylim([-100,100])
 colorbar()
 title('v')
 
 nexttile()
-colormap jet
+colormap coolwarm
 contourf(X, Y, W, 100, 'linestyle', 'none')
 axis equal
 xlim([-100,100])
+clim([-0.5, 0.5])
 % ylim([-100,100])
 colorbar()
 title('w')
 
 %% Stresses Plots
+
+uu(uu == 0) = nan;
+vv(vv == 0) = nan;
+ww(ww == 0) = nan;
+
+uv(uv == 0) = nan;
+uw(uw == 0) = nan;
+vw(vw == 0) = nan;
 
 ax = figure();
 t  = tiledlayout(2,3);

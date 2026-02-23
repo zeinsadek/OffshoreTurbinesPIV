@@ -6,13 +6,13 @@
 % out_path:     Folder where new struct file will be saved.
 % out_name:     Name of new struct file.
 
-function output = vector2matlabPIVXY(frames, file_path, out_path)
+function output = vector2matlabPIVXY(frames, file_path, waves, out_path)
 
     % Halim edit to be able to open
     output = matfile(out_path, 'Writable', true);
 
-    % Path for All Instantenious Snapshots for Specified Conditions\
-    file_name = strcat(frames.common, '.vc7');
+    % Path for All Instantenious Snapshots for Specified Conditions
+    image_name = strcat(frames.common, '.vc7');
     D = length(frames.common);
 
     % Check if Input is Readable
@@ -29,29 +29,49 @@ function output = vector2matlabPIVXY(frames, file_path, out_path)
     
         % Loop Through Each Frame in Folder.
         fprintf('\n<vector2matlab> PROGRESS: ');
+
+        % Counter to keep track of how many frames have been skipped
+        skip_count = 1;
+
+        % Counter to keep track of how many frames have been read
+        frame_counter = 1;
+
+        % Interate through snapshots. Only RAW frames what have been able
+        % to be opened are considered
         for frame_number = 1:D
 
             % Print Progress.
-            progressbarText(frame_number/D);
+            % progressbarText(frame_number/D);
+            disp(image_name(frame_number))
 
             % Load data.
-            data        = readimx(char(strcat(file_path, '/', file_name(frame_number))));
+            try
+                data = readimx(char(strcat(file_path, '\', image_name(frame_number))));
+            catch ME
+                % Catch errors on corrupt frames
+                warning('Skipping frame %d (%s): %s', frame_number, image_name(frame_number), ME.message);
+                skipped_frames(skip_count) = frame_number;
+                % Increment skip count
+                skip_count = skip_count + 1;
+                continue;
+            end
+
+            % Load buffers
             names       = data.Frames{1,1}.ComponentNames;        
             U0_index    = find(strcmp(names, 'U0'));
             V0_index    = find(strcmp(names, 'V0'));
             W0_index    = find(strcmp(names, 'W0'));
     
-            UF(:, :, frame_number) = data.Frames{1,1}.Components{U0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{U0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{U0_index,1}.Scale.Offset;
-            VF(:, :, frame_number) = data.Frames{1,1}.Components{V0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{V0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{V0_index,1}.Scale.Offset;
-            WF(:, :, frame_number) = data.Frames{1,1}.Components{W0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{W0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{W0_index,1}.Scale.Offset;
-   
-        end
+            UF(:, :, frame_counter) = data.Frames{1,1}.Components{U0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{U0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{U0_index,1}.Scale.Offset;
+            VF(:, :, frame_counter) = data.Frames{1,1}.Components{V0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{V0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{V0_index,1}.Scale.Offset;
+            WF(:, :, frame_counter) = data.Frames{1,1}.Components{W0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{W0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{W0_index,1}.Scale.Offset;
 
-        % % Make new array to get matfile function to work
-        % % Correct Sign, Direction, and Add Data to Object.
-        % output.U = -UF;
-        % output.V = VF;
-        % output.W = WF;
+            % Also save wave profiles
+            wave_profiles(frame_counter, :) = waves.wave_profiles(frame_number, :);
+
+            % Increment frame count
+            frame_counter = frame_counter + 1;
+        end
         
         %%% Statistical Filtering in Time
         U_mean = mean(UF, 3, 'omitnan');
@@ -64,7 +84,9 @@ function output = vector2matlabPIVXY(frames, file_path, out_path)
 
         std_tol = 4;
         fprintf('\n<vector2matlab2D> Applying Statistical Filter... STD = %1.0f\n', std_tol);
-        for frame_number = 1:D
+
+        % Interate through all frames that were read
+        for frame_number = 1:(frame_counter - 1)
 
             % Print Progress.
             progressbarText(frame_number/D);
@@ -92,9 +114,24 @@ function output = vector2matlabPIVXY(frames, file_path, out_path)
     
         % Make new array to get matfile function to work
         % Correct Sign, Direction, and Add Data to Object.
+       
+        %%% Last Changed 6/3/2025
+        % DaVis flips v automatically, so we need to change it back
         output.U = -UF;
-        output.V = VF;
-        output.W = WF;
+        output.V = -VF;
+        output.W = -WF;
+
+        % Save waves
+        output.wave_profiles = wave_profiles;
+
+        if skip_count == 1
+            output.skip = nan;
+        else 
+            output.skip = skipped_frames;
+            fprintf('\n<vector2matlabPIVXY> Unreadable frames: \n')
+            disp(image_names(skipped_frames))
+            fprintf('\n')
+        end
 
         % Add Image/Data Parameters to struct file.
         nf     = size(output.U);
@@ -103,7 +140,7 @@ function output = vector2matlabPIVXY(frames, file_path, out_path)
         [X, Y] = meshgrid(x, y);
         output.X = X;
         output.Y = Y;
-        output.D = D;
+        output.D = (frame_counter - 1);
         
         % Save Matlab File.
         fprintf('\n<vector2matlab> Saving Data to File... \n');

@@ -1,6 +1,7 @@
-function output = croppingPIVYZ(data, waves_data, details, out_path)
+function output = croppingPIVYZ(data, waves_data, out_path)
 
-    fprintf('<croppingPIVXZ> Cropping Instantaneous Fields...\n');
+    addpath('C:\Users\ofercak\Desktop\Zein\PIV\Inpaint_nans');
+    fprintf('<croppingPIVYZ> Cropping Instantaneous Fields...\n');
 
     % Halim edit to be able to open
     output = matfile(out_path, 'Writable', true);
@@ -26,75 +27,60 @@ function output = croppingPIVYZ(data, waves_data, details, out_path)
         V(X > 100 | X < -100) = nan;
         W(X > 100 | X < -100) = nan;
         
-        % Initial, uncropped x positions from DaVis
+        % Initial, uncropped x and y positions from DaVis
         x = X(1,:);
+        y = Y(:,1);
         
         %%% LHS
         % Find index of value closest to what we want to crop to
-        left_bound = -100;
+        left_bound = 100;
         [~, left_bound_idx] = min(abs(x - left_bound));
-        
-        % Truncate relavant portion of array
-        X(:, 1:left_bound_idx) = [];
-        Y(:, 1:left_bound_idx) = [];
-        U(:, 1:left_bound_idx) = [];
-        V(:, 1:left_bound_idx) = [];
-        W(:, 1:left_bound_idx) = [];
-        
+         
         %%% RHS
-        % Redefine x since it has been partially cropped
-        x = X(1,:);
         % Find index of value closest to what we want to crop to
-        right_bound = 100;
+        right_bound = -100;
         [~, right_bound_idx] = min(abs(x - right_bound));
-        
-        % Truncate relavant portion of array
-        X(:, right_bound_idx:end) = [];
-        Y(:, right_bound_idx:end) = [];
-        U(:, right_bound_idx:end) = [];
-        V(:, right_bound_idx:end) = [];
-        W(:, right_bound_idx:end) = [];
-    
-        % Flip components to have flow be left to right
-        U = fliplr(U);
-        V = fliplr(V);
-        W = fliplr(W);
+
+        %%% TOP
+        % Find index of value closest to what we want to crop to
+        top_bound = 100;
+        [~, top_bound_idx] = min(abs(y - top_bound));
+
+        %%% BOTTOM
+        bottom_bound = -150;
+        [~, bottom_bound_idx] = min(abs(y - bottom_bound));
+
+
+        %%% ZEIN NEW: better, cleaner way of cropping vectors
+        X = X(top_bound_idx:bottom_bound_idx, left_bound_idx:right_bound_idx);
+        Y = Y(top_bound_idx:bottom_bound_idx, left_bound_idx:right_bound_idx);
+        U = U(top_bound_idx:bottom_bound_idx, left_bound_idx:right_bound_idx);
+        V = V(top_bound_idx:bottom_bound_idx, left_bound_idx:right_bound_idx);
+        W = W(top_bound_idx:bottom_bound_idx, left_bound_idx:right_bound_idx);
+
+        %%% NEW: Fill in salt+peper holes w/ interpolation\
+        U(U == 0) = nan;
+        V(V == 0) = nan;
+        W(W == 0) = nan;
+
+        % U = inpaint_nans(double(U));
+        % V = inpaint_nans(double(V));
+        % W = inpaint_nans(double(W));
         
         % Crop below wave
         nf   = size(U);
         wave = imresize(waves_data.wave_profiles(frame,:),[1,nf(2)]);
-        waves(frame, :) = wave;
-        
-        % Delete physically masked portion. Only for Plane 1
-        if details.plane == 1
-            if contains(details.arrangement, 'Floating') == 1
-                cutoff = -20;
-                U(X < cutoff) = nan;
-                V(X < cutoff) = nan;
-                W(X < cutoff) = nan;
-                wave(unique(X) < cutoff) = nan;
-            end
-        else
-            cutoff = -100;
-        end
-        
-        % Clean up blank spots in wave
-        %%% BULLETPROOF THIS PART OF THE CODE
-        x = unique(X).';
-        [~, interp_idx] = min(abs(x - cutoff));
-        if sum(isnan(wave(interp_idx:end))) < 100 
-            interp_x = x(interp_idx:end);
-            interp_wave = wave(interp_idx:end);
-            interp_wave(isnan(interp_wave)) = interp1(interp_x(~isnan(interp_wave)), interp_wave(~isnan(interp_wave)), interp_x(isnan(interp_wave)), 'linear', 'extrap');
-            
-            % Fill in holes
-            waves(frame, interp_idx:end) = interp_wave;
-        end
-    
-        % Crop below wave
-        U(Y < waves(frame,:)) = nan;
-        V(Y < waves(frame,:)) = nan;
-        W(Y < waves(frame,:)) = nan;
+        waves(frame, :) = fliplr(wave);
+
+        U(Y < wave) = nan;
+        V(Y < wave) = nan;
+        W(Y < wave) = nan;
+
+        %%% ZEIN: fliplr to get positive-spanwise coordinate pointing
+        %%% correctly
+        U = fliplr(U);
+        V = fliplr(V);
+        W = fliplr(W);
 
         % Re-written to work with matfile()
         UFs(:, :, frame) = U;
@@ -104,21 +90,24 @@ function output = croppingPIVYZ(data, waves_data, details, out_path)
     end
 
     % Exclude frames where no wave was detected
-    wave_mask = ~isnan((sum(waves(:, interp_idx:end), 2)));
-
-    UFs = UFs(:, :, wave_mask);
-    VFs = VFs(:, :, wave_mask);
-    WFs = WFs(:, :, wave_mask);
-    waves = waves(wave_mask, :);
+    % wave_mask = ~isnan((sum(waves, 2)));
+    % UFs = UFs(:, :, wave_mask);
+    % VFs = VFs(:, :, wave_mask);
+    % WFs = WFs(:, :, wave_mask);
+    % waves = waves(wave_mask, :);
     
     % Save to matfile
-    output.D = sum(wave_mask);
+    output.D = D;
+    %%% ZEIN: fliplr to get positive-spanwise coordinate pointing
+    %%% correctly
+    output.X = -1 * X;
+    output.Y = Y;
     output.U = UFs;
     output.V = VFs;
     output.W = WFs;
     output.waves = waves;
 
     % Save Matlab File.
-    fprintf('<croppingPIVXZ> Saving Data to File... \n');
-    clc; fprintf('<croppingPIVXZ> Data Save Complete \n')
+    fprintf('<croppingPIVYZ> Saving Data to File... \n');
+    clc; fprintf('<croppingPIVYZ> Data Save Complete \n')
 end

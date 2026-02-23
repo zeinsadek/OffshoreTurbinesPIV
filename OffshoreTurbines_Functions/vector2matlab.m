@@ -31,7 +31,7 @@ function output = vector2matlab(file_path, out_path)
     
         % Loop Through Each Frame in Folder.
         fprintf('\n<vector2matlab> PROGRESS: ');
-        for frame_number = 1:D
+        for frame_number = 1:100
 
             % Print Progress.
             progressbarText(frame_number/D);
@@ -48,9 +48,9 @@ function output = vector2matlab(file_path, out_path)
             WF = data.Frames{1,1}.Components{W0_index,1}.Scale.Slope.*data.Frames{1,1}.Components{W0_index,1}.Planes{1,1} + data.Frames{1,1}.Components{W0_index,1}.Scale.Offset;
     
             % Correct Sign, Direction, and Add Data to Object.
-            output.U(:, :, frame_number) =  rot90(WF);
-            output.V(:, :, frame_number) =  -1 * rot90(UF);
-            output.W(:, :, frame_number) =  rot90(VF);
+            output.U(:, :, frame_number) =  UF;
+            output.V(:, :, frame_number) =  VF;
+            output.W(:, :, frame_number) =  WF;
         
     
         end
@@ -59,14 +59,13 @@ function output = vector2matlab(file_path, out_path)
         nf = size(output.U);
         x = data.Frames{1,1}.Scales.X.Slope.*linspace(1, nf(1), nf(1)).*data.Frames{1,1}.Grids.X + data.Frames{1,1}.Scales.X.Offset;
         y = data.Frames{1,1}.Scales.Y.Slope.*linspace(1, nf(2), nf(2)).*data.Frames{1,1}.Grids.Y + data.Frames{1,1}.Scales.Y.Offset;
-        [Y, X] = meshgrid(x, y);
-        output.X = (rot90(-X));
-        output.Y = (rot90(-Y));
+        [X, Y] = meshgrid(x, y);
+        output.X = X;
+        output.Y = Y;
         output.D = D;
         
         % Save Matlab File.
         fprintf('\n<vector2matlab> Saving Data to File... \n');
-        %file_save = strcat(out_path, '/', out_name, '.mat');
         save(out_path, 'output');
         clc; fprintf('<vector2matlab> Data Save Complete \n')
         

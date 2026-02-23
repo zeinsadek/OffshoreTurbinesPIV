@@ -1,7 +1,7 @@
 %%% Free Surface Detection Code
 % Zein Sadek, 5/23
 
-function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
+function output = wavedetectionPIVYZ(frames, raw_image_path, out_path)
 
     % Check if Input is Readable
     if isempty(raw_image_path)
@@ -21,6 +21,10 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
         image_name = strcat(frames.common, '.im7');
         D          = length(image_name);
 
+        %%% FOR TESTING
+        % D = 500;
+        scale = 0.1;
+
         % Load snapshots from both Cameras
         raw            = readimx(char(strcat(raw_image_path, "/", image_name(1))));
         raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
@@ -30,13 +34,18 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
         x = raw.Frames{1,1}.Scales.X.Slope.*linspace(1, nf(1), nf(1)).*raw.Frames{1,1}.Grids.X + raw.Frames{1,1}.Scales.X.Offset;
         y = raw.Frames{1,1}.Scales.Y.Slope.*linspace(1, nf(2), nf(2)).*raw.Frames{1,1}.Grids.Y + raw.Frames{1,1}.Scales.Y.Offset;
         [X, ~] = meshgrid(x, y);
-        X = -fliplr(X);
+        X = -X;
+        x = -x;
+
+        %%% DOWNSCALE IMAGES BCZ TOO BIG
+        x = imresize(x, scale);
+        X = imresize(X, scale);
 
         % Crop array dimensions
         %%% LHS
         % Find index of value closest to what we want to crop to. Initial, uncropped x positions from DaVis
         x = X(1,:);
-        left_bound = -100;
+        left_bound = 100;
         [~, left_bound_idx] = min(abs(x - left_bound));
         
         % Truncate relavant portion of array
@@ -46,7 +55,7 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
         % Redefine x since it has been partially cropped
         x = X(1,:);
         % Find index of value closest to what we want to crop to
-        right_bound = 100;
+        right_bound = -100;
         [~, right_bound_idx] = min(abs(x - right_bound));
         
         % Truncate relavant portion of array
@@ -72,10 +81,20 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
             x = raw.Frames{1,1}.Scales.X.Slope.*linspace(1, nf(1), nf(1)).*raw.Frames{1,1}.Grids.X + raw.Frames{1,1}.Scales.X.Offset;
             y = raw.Frames{1,1}.Scales.Y.Slope.*linspace(1, nf(2), nf(2)).*raw.Frames{1,1}.Grids.Y + raw.Frames{1,1}.Scales.Y.Offset;
             [X, Y] = meshgrid(x, y);
-            X = -fliplr(X);
-            raw_image_CAM1 = fliplr(raw_image_CAM1.');
-            raw_image_CAM2 = fliplr(raw_image_CAM2.');
-            
+            X = -X;
+            x = -x;
+
+            raw_image_CAM1 = raw_image_CAM1.';
+            raw_image_CAM2 = raw_image_CAM2.';
+
+            %%% DOWNSCALE IMAGES BCZ TOO BIG
+            raw_image_CAM1 = imresize(raw_image_CAM1, scale);
+            raw_image_CAM2 = imresize(raw_image_CAM2, scale);
+            X = imresize(X, scale);
+            Y = imresize(Y, scale);
+            x = imresize(-x, scale);
+            y = imresize(y, scale);
+                        
             % Get individual FOV
             raw_image_CAM1(raw_image_CAM1 == 0) = nan;
             raw_image_CAM2(raw_image_CAM2 == 0) = nan;
@@ -91,32 +110,26 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
             
             % Combined stereo image
             combined_image = FOV_mask .* (raw_image_CAM1 + raw_image_CAM2);
-            
-            % Mask Plane 1 because of tape
-            if details.plane == 1
-                if contains(details.arrangement, 'Floating') == 1
-                    combined_image(X < -35) = nan;
-                end
-            end
+
 
             % Crop array dimensions
             %%% LHS
             % Find index of value closest to what we want to crop to
             % Initial, uncropped x positions from DaVis
             x = X(1,:);
-            left_bound = -100;
+            left_bound = 100;
             [~, left_bound_idx] = min(abs(x - left_bound));
             
             % Truncate relavant portion of array
             X(:, 1:left_bound_idx) = [];
-            Y(:, 1:left_bound_idx) = [];
+            y(:, 1:left_bound_idx) = [];
             combined_image(:, 1:left_bound_idx) = [];
             
             %%% RHS
             % Redefine x since it has been partially cropped
             x = X(1,:);
             % Find index of value closest to what we want to crop to
-            right_bound = 100;
+            right_bound = -100;
             [~, right_bound_idx] = min(abs(x - right_bound));
             
             % Truncate relavant portion of array
@@ -131,15 +144,23 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
             background  = 40;
             
             % Normal Gauss
-            blur_size = 15;
+            blur_size = 5;
             
             % Get Image Size before Blurring
             nf = size(combined_image);
-            
+
             % Blur and Threshold
             combined_image_blurred = imgaussfilt(combined_image, blur_size);
-            combined_image_blurred(combined_image_blurred < background) = 0;
+            combined_image_blurred(combined_image_blurred < background) = nan;
             
+            %%% NEW: Try masking deleting above wave to remove bright spots
+            combined_image_blurred(Y > -81) = nan;
+            %%% NEW: Block brightspot
+            % combined_image_blurred(X > -76 & X < -64 & Y < -80 & Y > -88) = nan;
+            %%% NEW: remove super bright spots
+            combined_image_blurred(combined_image_blurred > 65) = nan;
+
+
             % Canny Edge Deetection
             wave_edge = edge(combined_image_blurred, 'Canny', [canny_lower, canny_upper]);
             wave_profile = zeros(1, nf(2));
@@ -160,7 +181,17 @@ function output = wavedetectionPIVYZ(frames, raw_image_path, details, out_path)
             end
             
             % Clean profile
-            wave_profile(wave_profile > 0) = nan;
+            wave_profile = fillmissing(filloutliers(wave_profile, "linear"), "linear");
+            
+            %%% TEST
+            % figure(frame_number)
+            % hold on
+            % contourf(X, Y, combined_image_blurred, 10, 'LineStyle', 'none')
+            % plot(x, wave_profile, 'color', 'red', 'linewidth', 3)
+            % hold off
+            % title(num2str(frame_number))
+            % axis equal
+            % colorbar()
 
             % Save profile
             wave_profiles(frame_number, :) = wave_profile;
