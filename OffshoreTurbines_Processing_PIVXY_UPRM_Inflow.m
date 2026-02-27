@@ -103,6 +103,7 @@ vw(Y < max_wave_profile) = nan;
 
 %% Means Plots
 
+
 levels = 100;
 ax = figure();
 t  = tiledlayout(1,3);
@@ -137,6 +138,8 @@ clear levels
 %% Test profiles of u
 
 u_inf = 4.2;
+hub_height = 117;
+diameter = 150;
 labelFontSize = 14;
 
 mean_u_profile = mean(U, 2, 'omitnan') / u_inf;
@@ -148,11 +151,14 @@ mean_u_profile(y > 204) = nan;
 clear h
 clc; close all
 figure('color', 'white', 'units', 'centimeters', 'position', [15,15,20,10])
-tile = tiledlayout(1,2);
+tile = tiledlayout(1,2,'padding', 'tight');
 sgtitle('PSU Offshore Experiments Inflow: No Waves, $u_{\infty} = 4.2\, m/s$', 'interpreter', 'latex')
 
 h(1) = nexttile;
 plot(mean_u_profile, y, 'linewidth', 2)
+yline(hub_height)
+yline(hub_height + (diameter/2), 'linestyle', '--')
+yline(hub_height - (diameter/2), 'linestyle', '--')
 axis square
 xlim([0, 1])
 xlabel(h(1), '$u \mathbin{/} u_{\infty}$', 'interpreter', 'latex', 'fontsize', labelFontSize)
@@ -160,6 +166,9 @@ ylabel(tile, '$y$ [mm]', 'interpreter', 'latex', 'fontsize', labelFontSize)
 
 h(2) = nexttile;
 plot(mean_Ti_profile, y, 'linewidth', 2)
+yline(hub_height)
+yline(hub_height + (diameter/2), 'linestyle', '--')
+yline(hub_height - (diameter/2), 'linestyle', '--')
 axis square
 xlim([0, 0.18])
 xlabel(h(2), "$Ti = \sqrt{\overline{u' u'}} \mathbin{/} u_{\infty}$", 'interpreter', 'latex', 'fontsize', labelFontSize)
@@ -188,12 +197,17 @@ smooth_u_plus = (1 / k) * log(smooth_y_plus) + B;
 
 clc; close all
 figure('color', 'white')
-plot(-mean_uv_profile / (u_inf^2), y)
+plot(-mean_uv_profile / (u_inf^2), y, 'LineWidth', 2)
+yline(hub_height)
+yline(hub_height + (diameter/2), 'linestyle', '--')
+yline(hub_height - (diameter/2), 'linestyle', '--')
 xlabel("$-\overline{u' v'} \mathbin{/} u_{\infty}^2$", 'interpreter', 'latex', 'fontsize', labelFontSize)
 ylabel('$y$ [mm]', 'interpreter', 'latex', 'fontsize', labelFontSize)
 xlim([0, 4.5E-3])
+ylim([-2, 207])
 
-%%
+%% Log-law
+
 figure('color', 'white')
 hold on
 % plot(smooth_y_plus, smooth_u_plus)
@@ -205,66 +219,80 @@ xlabel("$y^+$", 'interpreter', 'latex', 'fontsize', labelFontSize)
 ylabel('$u^+$', 'interpreter', 'latex', 'fontsize', labelFontSize)
 
 
+%% Save useful values for UPRM
 
+output.u_inf = u_inf;
+output.D_mm = diameter;
+output.H_mm = hub_height;
+output.u_star = u_star;
 
+output.y_mm = y;
+output.u_profile_normalized = mean_u_profile;
+output.Ti_profile = mean_Ti_profile;
+
+save_folder = 'C:\Users\sadek\Desktop\ZeinScratch';
+filename = 'PSU_UPRM_NoWave_Inflow_Profile.mat';
+pause(3)
+save(fullfile(save_folder, filename), 'output')
+clc; fprintf('Matfile Saved!...\n')
 
 
 %% Stresses Plots
 
-ax = figure();
-t  = tiledlayout(2,3);
-sgtitle(recording_name, 'interpreter', 'none')
-
-% Normal Stresses
-nexttile()
-colormap jet
-contourf(X, Y, uu, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('uu')
-
-nexttile()
-colormap jet
-contourf(X, Y, vv, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('vv')
-
-nexttile()
-colormap jet
-contourf(X, Y, ww, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('ww')
-
-
-% Shear Stresses
-nexttile()
-colormap jet
-contourf(X, Y, uv, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('uv')
-
-nexttile()
-colormap jet
-contourf(X, Y, uw, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('uw')
-
-nexttile()
-colormap jet
-contourf(X, Y, vw, 100, 'linestyle', 'none')
-axis equal
-xlim([-100,100])
-colorbar()
-title('vw')
+% ax = figure();
+% t  = tiledlayout(2,3);
+% sgtitle(recording_name, 'interpreter', 'none')
+% 
+% % Normal Stresses
+% nexttile()
+% colormap jet
+% contourf(X, Y, uu, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('uu')
+% 
+% nexttile()
+% colormap jet
+% contourf(X, Y, vv, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('vv')
+% 
+% nexttile()
+% colormap jet
+% contourf(X, Y, ww, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('ww')
+% 
+% 
+% % Shear Stresses
+% nexttile()
+% colormap jet
+% contourf(X, Y, uv, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('uv')
+% 
+% nexttile()
+% colormap jet
+% contourf(X, Y, uw, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('uw')
+% 
+% nexttile()
+% colormap jet
+% contourf(X, Y, vw, 100, 'linestyle', 'none')
+% axis equal
+% xlim([-100,100])
+% colorbar()
+% title('vw')
 
 
 

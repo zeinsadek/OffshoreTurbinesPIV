@@ -51,7 +51,7 @@ function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
 
             % Load both camera images
             raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
-            raw_image_CAM2 = raw.Frames{3,1}.Components{1,1}.Planes{1,1};
+            raw_image_CAM2 = raw.Frames{2,1}.Components{1,1}.Planes{1,1};
 
             % Get coordinates
             nf = size(raw_image_CAM1);
