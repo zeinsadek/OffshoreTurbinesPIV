@@ -1,6 +1,6 @@
 function output = refinedwavedetectionPIVXY(perspective_path, details, crop, skipped_frames_idxs, settings, frames, out_path)
 
-    addpath('C:\Users\ofercak\Desktop\Zein\PIV\readimx-v2.1.9-win64');
+    addpath('C:\Users\sadek\Desktop\readimx-v2.1.9-win64');
 
     % Halim edit to be able to open
     output = matfile(out_path, 'Writable', true);
@@ -52,7 +52,7 @@ function output = refinedwavedetectionPIVXY(perspective_path, details, crop, ski
             
             % Load both camera images
             raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
-            raw_image_CAM2 = raw.Frames{3,1}.Components{1,1}.Planes{1,1};
+            raw_image_CAM2 = raw.Frames{2,1}.Components{1,1}.Planes{1,1};
             
             % Get coordinates
             nf = size(raw_image_CAM1);

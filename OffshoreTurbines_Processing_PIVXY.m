@@ -14,16 +14,17 @@ fprintf('All Paths Imported...\n\n')
 
 % Data paths
 clc;
-project_path   = 'G:\FWF_AK12_Inline_PIVXY\FWF_Inline_PL1_AK12';
-recording_name = 'FWF_I_PL1_AK12_LM40_A';
+project_path   = 'E:\FWF_AK12_Inline_PIVXY\FWF_Inline_PL1_AK12';
+recording_name = 'FWF_I_PL1_AK12_LM50_A';
 details        = namereader(recording_name);
 
 % Image paths
-perspective_path = fullfile(project_path, recording_name, 'ImageCorrection');
+% perspective_path = fullfile(project_path, recording_name, 'ImageCorrection');
+perspective_path = fullfile(project_path, recording_name, 'CompressAvg_4x4');
 piv_path         = fullfile(project_path, recording_name, 'StereoPIV_MPd(2x32x32_50%ov)_GPU');
 
 % Save paths
-save_path = 'H:\Offshore';
+save_path = 'E:\test_results';
 paths     = savepaths(save_path, recording_name);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,10 +121,10 @@ end
 
 %% check
 
-f = 100;
+f = 1;
 figure()
 hold on
-contourf(crop.X, crop.Y, crop.U(:, :, f), 100, 'linestyle', 'none')
+contourf(crop.X, crop.Y, crop.W(:, :, f), 100, 'linestyle', 'none')
 plot(crop.X(1,:), crop.waves(f,:), 'color', 'black')
 hold off
 axis equal
@@ -310,7 +311,7 @@ ylim([-120, -80])
 % RE-REFINE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Make a copt of the refined_waves
+% Make a copy of the refined_waves
 rerefined_waves = refined.waves;
 
 % No waves
@@ -450,7 +451,7 @@ frames = updatecommonframes(frames, wavecrop, paths.frame, 'RAW');
 
 %% check that frames are cropped below the wave
 
-f = 12;
+f = 3;
 levels = 100;
 
 figure()
