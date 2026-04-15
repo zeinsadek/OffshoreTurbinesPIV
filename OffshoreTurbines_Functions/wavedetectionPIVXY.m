@@ -123,7 +123,10 @@ function output = wavedetectionPIVXY(frames, raw_image_path, details, out_path)
             % Canny Params
             canny_lower = 0.1;
             canny_upper = 0.4;
-            background  = 40;
+
+            %%% MANUALLY CHANGING THIS FOR NOW
+            % background  = 40;
+            background = 0;
             
             % Normal Gauss
             blur_size = 15;

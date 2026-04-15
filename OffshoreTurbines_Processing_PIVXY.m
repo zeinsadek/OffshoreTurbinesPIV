@@ -14,17 +14,17 @@ fprintf('All Paths Imported...\n\n')
 
 % Data paths
 clc;
-project_path   = 'E:\FWF_AK12_Inline_PIVXY\FWF_Inline_PL1_AK12';
-recording_name = 'FWF_I_PL1_AK12_LM50_A';
+project_path   = 'E:\FixedBottomFarm\FBF_Inline_PL1_AK12';
+recording_name = 'FBF_I_PL1_AK12_LM33_A';
 details        = namereader(recording_name);
 
 % Image paths
 % perspective_path = fullfile(project_path, recording_name, 'ImageCorrection');
 perspective_path = fullfile(project_path, recording_name, 'CompressAvg_4x4');
-piv_path         = fullfile(project_path, recording_name, 'StereoPIV_MPd(2x32x32_50%ov)_GPU');
+piv_path         = fullfile(project_path, recording_name, 'StereoPIV_MPd(1x32x32_50%ov)');
 
 % Save paths
-save_path = 'E:\test_results';
+save_path = 'E:\FixedBottomFarm_Results';
 paths     = savepaths(save_path, recording_name);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,10 +121,10 @@ end
 
 %% check
 
-f = 1;
+f = 100;
 figure()
 hold on
-contourf(crop.X, crop.Y, crop.W(:, :, f), 100, 'linestyle', 'none')
+contourf(crop.X, crop.Y, crop.U(:, :, f), 100, 'linestyle', 'none')
 plot(crop.X(1,:), crop.waves(f,:), 'color', 'black')
 hold off
 axis equal
@@ -171,8 +171,14 @@ for i = 1:length(low_res_waves)
 
     % Ignore cropped region of Plane 1 Floating
     if details.plane == 1
+        % Floating
         if contains(details.arrangement, 'Floating') == 1
             cutoff = -20;
+        end
+
+        % Fixed-Bottom
+        if contains(details.arrangement, 'Fixed') == 1
+            cutoff = -80;
         end
 
     % Ignore cropped region of Plane 4 Floating
@@ -335,8 +341,14 @@ for i = 1:length(rerefined_waves)
     
     % Ignore cropped region of Plane 1 Floating
     if details.plane == 1
+        % Floating
         if contains(details.arrangement, 'Floating') == 1
             cutoff = -20;
+        end
+
+        % Fixed-Bottom
+        if contains(details.arrangement, 'Fixed') == 1
+            cutoff = -80;
         end
 
     % Ignore cropped region of Plane 4 Floating

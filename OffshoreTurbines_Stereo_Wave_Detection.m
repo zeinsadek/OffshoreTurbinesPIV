@@ -6,30 +6,30 @@
 %%%%%%%%%/Users/zeinsadek/Desktop/Experiments/PIV/Processing/Offshore/Offshore_Turbines_PIV/FWF_I_PL1_AK12_LM50_A_perspective%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clc; clear; close all;
-addpath('C:\Users\Zein\Desktop\PIV\OffshoreTurbinesPIV\OffshoreTurbines_Functions');
-addpath('C:\Users\Zein\Desktop\PIV\readimx-v2.1.9-win64');
-addpath('C:\Users\Zein\Desktop\PIV\Colormaps');
-fprintf("All Paths Imported...\n\n");
+addpath('C:\Users\sadek\Desktop\readimx-v2.1.9-win64');
+addpath('C:\Users\sadek\Desktop\ZeinPIVCodes_Github\OffshoreTurbinesPIV\OffshoreTurbines_Functions');
+addpath('C:\Program Files\MATLAB\slanCM')
+fprintf('All Paths Imported...\n\n')
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT PARAMETERS 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clc;
-image_directory = 'F:\PIV\FBT_PL2_AK12_1\FBT_PL2_AK12_LM50_A\ImageCorrection';
+image_directory = 'E:\FixedBottomFarm\FBF_Inline_PL2_AK12\FBF_I_PL2_AK12_LM50_A\CompressAvg_4x4';
 images = dir([image_directory, '/*.im7']);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LOAD IMAGES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-raw = readimx([image_directory, '\', images(101).name]);
+raw = readimx([image_directory, '\', images(3).name]);
 
 % Load snapshots from both Cameras
 raw_image_CAM1 = raw.Frames{1,1}.Components{1,1}.Planes{1,1};
 % raw_image_CAM1 = flipud((raw_image_CAM1));
 
-raw_image_CAM2 = raw.Frames{3,1}.Components{1,1}.Planes{1,1};
+raw_image_CAM2 = raw.Frames{2,1}.Components{1,1}.Planes{1,1};
 % raw_image_CAM2 = flipud((raw_image_CAM2));
 
 % Get coordinates
@@ -48,12 +48,19 @@ raw_image_CAM1 = fliplr(raw_image_CAM1.');
 raw_image_CAM2 = fliplr(raw_image_CAM2.');
 X = -fliplr(X);
 
-%%
+
+raw_image_CAM1(raw_image_CAM1 == 0) = nan;
+raw_image_CAM2(raw_image_CAM2 == 0) = nan;
+
+%% 
 
 figure()
-contourf(X,Y,raw_image_CAM1)
+contourf(X, Y, raw_image_CAM2, 100, 'linestyle', 'none')
 colorbar()
 axis equal
+
+% figure()
+% plot(raw_image_CAM2(:,50), Y(:,1))
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,7 +84,20 @@ FOV_mask = FOV_mask/2;
 combined_image = FOV_mask .* (raw_image_CAM1 + raw_image_CAM2);
 
 % Mask Plane 1 because of tape
-combined_image(X < -20) = nan;
+% combined_image(X < -20) = nan;
+
+% Mask plane 1 less if fixed-bottom
+% combined_image(X < -80) = nan;
+
+% combined_image = combined_image - mean(combined_image, 'all', 'omitnan');
+
+%%
+
+figure()
+contourf(X,Y,combined_image, 100, 'linestyle', 'none')
+colorbar()
+axis equal
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CROP ARRAY
@@ -109,40 +129,50 @@ Y(:, right_bound_idx:end) = [];
 combined_image(:, right_bound_idx:end) = [];
 x = X(1,:);
 
+figure()
+contourf(X,Y,combined_image, 100, 'linestyle', 'none')
+colorbar()
+axis equal
+
 %% Testing Different Gaussian Blurs
 
 tst = combined_image;
 tst_blur = juliaan_smooth(combined_image, 25);
 
-tst(tst < 50) = nan;
-tst_blur(tst_blur < 50) = nan;
+% tst(tst < 20) = nan;
+% tst_blur(tst_blur < 20) = nan;
 
 figure()
 t = tiledlayout(1,2);
 nexttile()
-contourf(X,Y,tst, 'LineStyle', 'none')
+contourf(X,Y,tst, 100, 'LineStyle', 'none')
 xline(0)
 axis equal
 title('OG')
 xlim([-100, 100])
 colorbar()
+% clim([0, 60])
 
 nexttile()
-contourf(X,Y,tst_blur, 'LineStyle', 'none')
+contourf(X,Y,tst_blur, 100, 'LineStyle', 'none')
 xline(0)
 axis equal
 title('Blurred')
 xlim([-100, 100])
 colorbar()
+% clim([0, 60])
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % EDGE DETECTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Canny Params
-canny_lower = 0.1;
-canny_upper = 0.4;
-background  = 40;
+% canny_lower = 0.1;
+% canny_upper = 0.4;
+background  = 0;
+
+canny_lower = 0;
+canny_upper = 0.2;
 
 % Normal Gauss
 blur_size = 15;
@@ -189,7 +219,7 @@ figure()
 t = tiledlayout(1,2);
 nexttile()
 hold on
-contourf(X,Y,combined_image, 'linestyle', 'none')
+contourf(X,Y,combined_image, 100, 'linestyle', 'none')
 plot(x, wave_profile, 'red')
 xline(0)
 hold off
@@ -198,7 +228,7 @@ xlim([-100, 100])
 
 nexttile()
 hold on
-contourf(X,Y,wave_cropped_image, 'linestyle', 'none')
+contourf(X,Y,wave_cropped_image, 100, 'linestyle', 'none')
 plot(x, wave_profile, 'red')
 xline(0)
 hold off

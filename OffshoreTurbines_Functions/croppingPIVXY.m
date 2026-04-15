@@ -1,6 +1,6 @@
 function output = croppingPIVXY(data, details, out_path)
 
-    fprintf('<croppingPIVXZ> Cropping Instantaneous Fields...\n');
+    fprintf('<croppingPIVXY> Cropping Instantaneous Fields...\n');
 
     % Halim edit to be able to open
     output = matfile(out_path, 'Writable', true);
@@ -67,8 +67,17 @@ function output = croppingPIVXY(data, details, out_path)
 
         % Delete physically masked portion for Floating Plane 1
         if details.plane == 1
+            % Floating
             if contains(details.arrangement, 'Floating') == 1
                 cutoff = -20;
+                U(X < cutoff) = nan;
+                V(X < cutoff) = nan;
+                W(X < cutoff) = nan;
+                wave(X(1,:) < cutoff) = nan;
+            end
+            % Fixed-Bottom
+            if contains(details.arrangement, 'Fixed') == 1
+                cutoff = -80;
                 U(X < cutoff) = nan;
                 V(X < cutoff) = nan;
                 W(X < cutoff) = nan;

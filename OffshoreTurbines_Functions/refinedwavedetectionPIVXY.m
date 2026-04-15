@@ -81,8 +81,14 @@ function output = refinedwavedetectionPIVXY(perspective_path, details, crop, ski
             
             % Mask Plane 1 because of tape
             if details.plane == 1
+                % Floating
                 if contains(details.arrangement, 'Floating') == 1
                     combined_image(X < -35) = nan;
+                end
+
+                % Fixed-Bottom
+                if contains(details.arrangement, 'Fixed') == 1
+                    combined_image(X < -80) = nan;
                 end
             end
 
@@ -158,8 +164,14 @@ function output = refinedwavedetectionPIVXY(perspective_path, details, crop, ski
             %%% Mask FWF Plane 1
             % Ignore cropped region of FWF Plane 1
             if details.plane == 1
+                % Floating
                 if contains(details.arrangement, 'Floating') == 1
                     cutoff = -20;
+                end
+                
+                % Fixed-Bottom
+                if contains(details.arrangement, 'Fixed') == 1
+                    cutoff = -80;
                 end
             elseif details.plane == 4
                 if contains(details.arrangement, 'Floating') == 1
